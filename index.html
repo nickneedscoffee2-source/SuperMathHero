@@ -852,18 +852,120 @@
             window.speechSynthesis.speak(msg);
         }
 
-        function playTitleTheme() {
+        function playDrum(type, startTime, vol = 0.5) {
+            if(isMuted || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(masterGain);
+            
+            if (type === 'kick') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, startTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+                gain.gain.setValueAtTime(vol, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+                osc.start(startTime); osc.stop(startTime + 0.1);
+            } else if (type === 'snare') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(250, startTime);
+                gain.gain.setValueAtTime(vol, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.2);
+                osc.start(startTime); osc.stop(startTime + 0.2);
+            } else if (type === 'hihat') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, startTime);
+                gain.gain.setValueAtTime(vol * 0.3, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.05);
+                osc.start(startTime); osc.stop(startTime + 0.05);
+            }
+        }
+
+        function playWorldTheme(world = 1) {
             if (mainBgmInterval) { clearInterval(mainBgmInterval); mainBgmInterval = null; }
             if (starBgmInterval) { clearInterval(starBgmInterval); starBgmInterval = null; }
             if(!audioCtx) initAudio();
-            const loop = () => {
-                if (!audioCtx) return;
-                const notes = [{f: 440, d: 0.72}, {f: 523.25, d: 0.72}, {f: 659.25, d: 1.46}, {f: 440, d: 0.72}, {f: 523.25, d: 0.72}, {f: 659.25, d: 1.46}, {f: 659.25, d: 0.72}, {f: 783.99, d: 0.72}, {f: 880, d: 1.46}, {f: 523.25, d: 0.72}, {f: 587.33, d: 0.72}, {f: 659.25, d: 1.46}];
-                let time = audioCtx.currentTime + 0.1;
-                notes.forEach(n => { playOcarinaNote(n.f, time, n.d, 0.05); time += n.d + 0.05; });
-            };
-            loop();
-            mainBgmInterval = setInterval(loop, 10450);
+            
+            if (world === 1 || world === 0) {
+                const loop = () => {
+                    if (!audioCtx) return;
+                    const notes = [{f: 440, d: 0.72}, {f: 523.25, d: 0.72}, {f: 659.25, d: 1.46}, {f: 440, d: 0.72}, {f: 523.25, d: 0.72}, {f: 659.25, d: 1.46}, {f: 659.25, d: 0.72}, {f: 783.99, d: 0.72}, {f: 880, d: 1.46}, {f: 523.25, d: 0.72}, {f: 587.33, d: 0.72}, {f: 659.25, d: 1.46}];
+                    let time = audioCtx.currentTime + 0.1;
+                    notes.forEach(n => { playOcarinaNote(n.f, time, n.d, 0.05); time += n.d + 0.05; });
+                };
+                loop();
+                mainBgmInterval = setInterval(loop, 10450);
+            } else if (world === 2) {
+                const loop = () => {
+                    if (!audioCtx) return;
+                    const notes = [{f: 440, d: 1.0}, {f: 493.88, d: 0.5}, {f: 523.25, d: 1.5}, {f: 587.33, d: 1.0}, {f: 659.25, d: 2.0}, {f: 587.33, d: 1.0}, {f: 523.25, d: 1.0}];
+                    let time = audioCtx.currentTime + 0.1;
+                    notes.forEach(n => { playOcarinaNote(n.f, time, n.d, 0.06); time += n.d + 0.1; });
+                };
+                loop();
+                mainBgmInterval = setInterval(loop, 8800);
+            } else if (world === 3) {
+                const loop = () => {
+                    if (!audioCtx) return;
+                    const notes = [{f: 349.23, d: 0.5}, {f: 392.00, d: 0.5}, {f: 440.00, d: 1.0}, {f: 523.25, d: 1.0}, {f: 493.88, d: 2.0}, {f: 392.00, d: 1.0}];
+                    let time = audioCtx.currentTime + 0.1;
+                    notes.forEach(n => { playOcarinaNote(n.f, time, n.d, 0.05); time += n.d + 0.1; });
+
+                };
+                loop();
+                mainBgmInterval = setInterval(loop, 6800);
+            } else if (world === 4) {
+                const loop = () => {
+                    if (!audioCtx) return;
+                    const notes = [{f: 523.25, d: 0.5}, {f: 659.25, d: 0.5}, {f: 783.99, d: 1.0}, {f: 659.25, d: 0.5}, {f: 523.25, d: 1.5}, {f: 587.33, d: 2.0}];
+                    let time = audioCtx.currentTime + 0.1;
+                    notes.forEach(n => { playOcarinaNote(n.f, time, n.d, 0.05); time += n.d + 0.1; });
+
+                };
+                loop();
+                mainBgmInterval = setInterval(loop, 6600);
+            } else if (world === 5) {
+                const loop = () => {
+                    if (!audioCtx) return;
+                    const notes = [{f: 587.33, d: 1.5}, {f: 659.25, d: 0.5}, {f: 698.46, d: 1.0}, {f: 880, d: 1.0}, {f: 783.99, d: 2.0}, {f: 659.25, d: 2.0}];
+                    let time = audioCtx.currentTime + 0.1;
+                    notes.forEach(n => { playOcarinaNote(n.f, time, n.d, 0.05); time += n.d + 0.1; });
+
+                };
+                loop();
+                mainBgmInterval = setInterval(loop, 8800);
+            } else if (world === 6) {
+                const loop = () => {
+                    if (!audioCtx) return;
+                    const notes = [{f: 659.25, d: 0.3}, {f: 783.99, d: 0.3}, {f: 880.00, d: 0.6}, {f: 987.77, d: 0.6}, {f: 880.00, d: 1.2}, {f: 783.99, d: 0.6}, {f: 659.25, d: 1.2}];
+                    let time = audioCtx.currentTime + 0.1;
+                    notes.forEach(n => { playOcarinaNote(n.f, time, n.d, 0.05); time += n.d + 0.05; });
+
+                };
+                loop();
+                mainBgmInterval = setInterval(loop, 5150);
+            } else if (world >= 7) {
+                const loop = () => {
+                    if (!audioCtx) return;
+                    let time = audioCtx.currentTime + 0.1;
+                    const notes = [
+                        329.63, 329.63, 392.00, 329.63, 440.00, 329.63, 493.88, 392.00,
+                        329.63, 329.63, 392.00, 329.63, 523.25, 493.88, 440.00, 392.00
+                    ];
+                    for (let iter = 0; iter < 2; iter++) {
+                        notes.forEach((f, i) => {
+                            let t = time + iter * 3.2 + (i * 0.2);
+                            playOcarinaNote(f, t, 0.15, 0.08); 
+
+                        });
+                    }
+                };
+                loop();
+                mainBgmInterval = setInterval(loop, 6400); 
+            }
+        }
+
+        function playTitleTheme() {
+            playWorldTheme(1);
         }
 
         function playStarTheme() {
@@ -880,9 +982,9 @@
             starBgmInterval = setInterval(loop, 900);
         }
 
-        function stopStarTheme() {
+        function stopStarTheme(world = 1) {
             if (starBgmInterval) { clearInterval(starBgmInterval); starBgmInterval = null; }
-            playTitleTheme();
+            playWorldTheme(world);
         }
 
         function playJump() { playSynth('square', 350, 0.2, 200, 0.15); }
@@ -1332,9 +1434,9 @@
                 constructor() { super('GameScene'); }
 
                 init(data) { 
-                    stopStarTheme(); 
                     data = data || {}; 
                     this.currentWorld = data.world !== undefined ? data.world : 1; 
+                    stopStarTheme(this.currentWorld); 
                     this.score = data.score || 0; 
                     this.lives = data.lives || 3; 
                     this.passedTut = data.passedTut || false;
@@ -3090,7 +3192,7 @@
                                     this.tweens.addCounter({
                                         from: 0, to: 100, duration: 10000,
                                         onUpdate: (tween) => { this.player.setTint(Phaser.Display.Color.HSVToRGB(tween.getValue()/100, 1, 1).color); if (Math.floor(tween.getValue()) % 4 === 0) this.player.setAlpha(0.3); else this.player.setAlpha(1); },
-                                        onComplete: () => { this.player.isInvincible = false; this.player.setAlpha(1); this.player.clearTint(); stopStarTheme(); }
+                                        onComplete: () => { this.player.isInvincible = false; this.player.setAlpha(1); this.player.clearTint(); stopStarTheme(this.currentWorld); }
                                     });
                                 } else { playNeedPractice(); }
                             });
