@@ -35,6 +35,7 @@
             width: 100vw; height: 100vh; border: none; border-radius: 0; box-shadow: none; background-color: #050510;
         }
         #game-container { image-rendering: optimizeQuality; width: 100%; height: 100%; }
+        #game-container canvas { width: 100% !important; height: 100% !important; object-fit: fill; }
         
         #ui-panel {
             text-align: center; width: 960px; background: #0f172a;
@@ -50,7 +51,8 @@
         }
         .start-box {
             background: #1e293b; border: 4px solid #38bdf8; border-radius: 12px; padding: 14px 28px;
-            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            max-height: 90vh; overflow-y: auto; overflow-x: hidden; width: auto; max-width: 95vw;
         }
         .start-box h1 { 
             color: #facc15; font-size: 38px; margin: 0 0 10px 0; text-shadow: 3px 3px 0 #000; 
@@ -90,78 +92,98 @@
         <div id="start-screen">
             <div class="start-box">
                 <h1>SUPER MATH HERO</h1>
-                <!-- Top row: Name + Character side by side -->
-                <div style="display:flex; gap:16px; align-items:center; justify-content:center; margin-bottom:8px;">
-                    <div class="input-group" style="margin:0;">
-                        <label>Ninja Name:</label><br>
-                        <input type="text" id="playerName" placeholder="Enter Name" maxlength="12" value="Hero"
-                            onblur="globalPlayerName=this.value; window.updateEquipmentUI(); if(window.loadGameData) window.loadGameData(this.value)"
-                            onkeydown="if(event.key==='Enter'){event.preventDefault(); event.stopPropagation(); this.blur();}">
+                <div style="display:flex; justify-content:center; gap:20px;">
+                    <!-- Left: Boss Gallery -->
+                    <div class="input-group" id="boss-gallery-group" style="display:none; margin:4px 0; align-items:center; flex-direction:column;">
+                        <label style="color:#facc15;">Boss Gallery:</label>
+                        <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
+                            <button type="button" class="btn-start" style="padding:4px 10px; min-width:30px;" onclick="cycleBoss(-1)">&lt;</button>
+                            <div style="background:rgba(0,0,0,0.3); border:2px solid #38bdf8; border-radius:8px; padding:4px;">
+                                <canvas id="boss-thumbnail" width="128" height="128" style="background:#1e293b; border-radius:4px;"></canvas>
+                            </div>
+                            <button type="button" class="btn-start" style="padding:4px 10px; min-width:30px;" onclick="cycleBoss(1)">&gt;</button>
+                        </div>
+                        <div id="boss-thumbnail-label" style="text-align:center; font-family:'Bubblegum Sans', cursive; margin-top:4px; font-size:18px; color:#fff;">World 1 Boss</div>
                     </div>
-                    <div class="input-group" style="margin:0;">
-                        <label>Select Ninja:</label><br>
-                        <div id="character-portraits" style="display:flex; gap:10px; justify-content:center; margin-top:4px;">
-                            <div id="portrait-boy-container" style="cursor:pointer; padding:4px; border:3px solid #facc15; border-radius:8px; background:rgba(0,0,0,0.3);" onclick="selectCharacter('boy')">
-                                <canvas id="portrait-boy" width="60" height="60"></canvas>
+
+                    <!-- Right: Main Options -->
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <!-- Top row: Name + Character side by side -->
+                        <div style="display:flex; gap:16px; align-items:center; justify-content:center; margin-bottom:8px;">
+                            <div class="input-group" style="margin:0;">
+                                <label>Ninja Name:</label><br>
+                                <input type="text" id="playerName" placeholder="Enter Name" maxlength="12" value="Hero"
+                                    onblur="globalPlayerName=this.value; window.updateEquipmentUI(); if(window.loadGameData) window.loadGameData(this.value)"
+                                    onkeydown="if(event.key==='Enter'){event.preventDefault(); event.stopPropagation(); this.blur();}">
                             </div>
-                            <div id="portrait-girl-container" style="cursor:pointer; padding:4px; border:3px solid transparent; border-radius:8px; background:rgba(0,0,0,0.3);" onclick="selectCharacter('girl')">
-                                <canvas id="portrait-girl" width="60" height="60"></canvas>
+                            <div class="input-group" style="margin:0;">
+                                <label>Select Ninja:</label><br>
+                                <div id="character-portraits" style="display:flex; gap:10px; justify-content:center; margin-top:4px;">
+                                    <div id="portrait-boy-container" style="cursor:pointer; padding:4px; border:3px solid #facc15; border-radius:8px; background:rgba(0,0,0,0.3);" onclick="selectCharacter('boy')">
+                                        <canvas id="portrait-boy" width="60" height="60"></canvas>
+                                    </div>
+                                    <div id="portrait-girl-container" style="cursor:pointer; padding:4px; border:3px solid transparent; border-radius:8px; background:rgba(0,0,0,0.3);" onclick="selectCharacter('girl')">
+                                        <canvas id="portrait-girl" width="60" height="60"></canvas>
+                                    </div>
+                                    <div id="portrait-alien-container" style="display:none; cursor:pointer; padding:4px; border:3px solid transparent; border-radius:8px; background:rgba(0,0,0,0.3);" onclick="selectCharacter('alien')">
+                                        <canvas id="portrait-alien" width="60" height="60"></canvas>
+                                    </div>
+                                </div>
                             </div>
-                            <div id="portrait-alien-container" style="display:none; cursor:pointer; padding:4px; border:3px solid transparent; border-radius:8px; background:rgba(0,0,0,0.3);" onclick="selectCharacter('alien')">
-                                <canvas id="portrait-alien" width="60" height="60"></canvas>
-                            </div>
+                        </div>
+                        <div class="input-group" id="level-select-group" style="display:none; margin:4px 0;">
+                            <label style="color:#facc15;">Jump to Level (God Mode):</label>
+                            <select id="startLevelSelect" style="background:#1e293b; color:#fff; padding:5px; border-radius:5px; border:2px solid #38bdf8; font-family:'Bubblegum Sans', cursive; font-size:16px;">
+                                <option value="1">World 1 - Suburbs</option>
+                                <option value="2">World 2 - Volcano</option>
+                                <option value="3">World 3 - Floating Isles</option>
+                                <option value="4">World 4 - Math Mines</option>
+                                <option value="5">World 5 - Cyber City</option>
+                                <option value="6">World 6 - Candy Land</option>
+                                <option value="7">World 7 - Darkness</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="margin:4px 0;">
+                            <label>Skin Tone:</label>
+                            <div class="swatch-container" id="swatches"></div>
                         </div>
                     </div>
                 </div>
-                <div class="input-group" id="level-select-group" style="display:none; margin:4px 0;">
-                    <label style="color:#facc15;">Jump to Level (God Mode):</label>
-                    <select id="startLevelSelect" style="background:#1e293b; color:#fff; padding:5px; border-radius:5px; border:2px solid #38bdf8; font-family:'Bubblegum Sans', cursive; font-size:16px;">
-                        <option value="1">World 1 - Suburbs</option>
-                        <option value="2">World 2 - Volcano</option>
-                        <option value="3">World 3 - Floating Isles</option>
-                        <option value="4">World 4 - Math Mines</option>
-                        <option value="5">World 5 - Cyber City</option>
-                        <option value="6">World 6 - Candy Land</option>
-                        <option value="7">World 7 - Darkness</option>
-                    </select>
-                </div>
-                <div class="input-group" style="margin:4px 0;">
-                    <label>Skin Tone:</label>
-                    <div class="swatch-container" id="swatches"></div>
-                </div>
                 
                 <div id="bonus-equipment" style="display:none; margin-top:8px; padding-top:8px; border-top:2px dashed #334155;">
-                    <div class="input-group" id="helmet-group" style="display:none;">
-                        <label style="color:#38bdf8;">Helmet:</label>&nbsp;
-                        <input type="radio" name="helmet" value="none" id="h-none" checked> <label for="h-none">None</label>&nbsp;&nbsp;
-                        <input type="radio" name="helmet" value="lion" id="h-lion"> <label for="h-lion" style="color:#facc15;">Lion Helmet</label>
-                    </div>
-                    <div class="input-group" id="belt-group" style="display:none;">
-                        <label style="color:#38bdf8;">Belt:</label>&nbsp;
-                        <input type="radio" name="belt" value="none" id="b-none" checked> <label for="b-none">None</label>&nbsp;&nbsp;
-                        <input type="radio" name="belt" value="equipped" id="b-equipped"> <label for="b-equipped" style="color:#facc15;">Champion Belt</label>
-                    </div>
-                    <div class="input-group" id="outfit-group" style="display:none;">
-                        <label style="color:#38bdf8;">Outfit:</label>&nbsp;
-                        <input type="radio" name="outfit" value="default" id="o-def" checked> <label for="o-def">Default</label>&nbsp;&nbsp;
-                        <input type="radio" name="outfit" value="karate" id="o-karate"> <label for="o-karate" style="color:#facc15;">Karate Gi</label>
-                    </div>
-                    <div class="input-group" id="glasses-group" style="display:none;">
-                        <label style="color:#38bdf8;">Glasses:</label>&nbsp;
-                        <input type="radio" name="glasses" value="none" id="gl-none" checked> <label for="gl-none">None</label>&nbsp;&nbsp;
-                        <input type="radio" name="glasses" value="macho" id="gl-macho"> <label for="gl-macho" style="color:#facc15;">Macho Shades</label>
-                    </div>
-                    <div class="input-group" id="power-group" style="display:none;">
-                        <label style="color:#38bdf8;">Power:</label>&nbsp;
-                        <input type="radio" name="power" value="none" id="p-none" checked> <label for="p-none">None</label>&nbsp;&nbsp;
-                        <input type="radio" name="power" value="levitate" id="p-levi"> <label for="p-levi" style="color:#facc15;">Levitation</label>
+                    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px;">
+                        <div class="input-group" id="helmet-group" style="display:none; margin:0;">
+                            <label style="color:#38bdf8;">Helmet:</label>&nbsp;
+                            <input type="radio" name="helmet" value="none" id="h-none" checked> <label for="h-none">None</label>&nbsp;&nbsp;
+                            <input type="radio" name="helmet" value="lion" id="h-lion"> <label for="h-lion" style="color:#facc15;">Lion</label>
+                        </div>
+                        <div class="input-group" id="belt-group" style="display:none; margin:0;">
+                            <label style="color:#38bdf8;">Belt:</label>&nbsp;
+                            <input type="radio" name="belt" value="none" id="b-none" checked> <label for="b-none">None</label>&nbsp;&nbsp;
+                            <input type="radio" name="belt" value="equipped" id="b-equipped"> <label for="b-equipped" style="color:#facc15;">Champion</label>
+                        </div>
+                        <div class="input-group" id="outfit-group" style="display:none; margin:0;">
+                            <label style="color:#38bdf8;">Outfit:</label>&nbsp;
+                            <input type="radio" name="outfit" value="default" id="o-def" checked> <label for="o-def">Def.</label>&nbsp;&nbsp;
+                            <input type="radio" name="outfit" value="karate" id="o-karate"> <label for="o-karate" style="color:#facc15;">Karate</label>
+                        </div>
+                        <div class="input-group" id="glasses-group" style="display:none; margin:0;">
+                            <label style="color:#38bdf8;">Glasses:</label>&nbsp;
+                            <input type="radio" name="glasses" value="none" id="gl-none" checked> <label for="gl-none">None</label>&nbsp;&nbsp;
+                            <input type="radio" name="glasses" value="macho" id="gl-macho"> <label for="gl-macho" style="color:#facc15;">Macho</label>
+                        </div>
+                        <div class="input-group" id="power-group" style="display:none; margin:0;">
+                            <label style="color:#38bdf8;">Power:</label>&nbsp;
+                            <input type="radio" name="power" value="none" id="p-none" checked> <label for="p-none">None</label>&nbsp;&nbsp;
+                            <input type="radio" name="power" value="levitate" id="p-levi"> <label for="p-levi" style="color:#facc15;">Levitate</label>
+                        </div>
                     </div>
                 </div>
 
-                <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
+                <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:10px;">
                     <button class="btn-start" style="font-size:16px; padding:7px 16px; background:#64748b; margin-top:0;" onclick="openControlsModal()">⚙️ Controls</button>
                     <button class="btn-start" style="font-size:16px; padding:7px 16px; background:#64748b; margin-top:0;" onclick="toggleFullscreen()">⛶ Fullscreen</button>
-                    <button class="btn-start" style="font-size:16px; padding:7px 20px; margin-top:0;" onclick="document.getElementById('playerName').blur(); initAudio(); startGame();">▶ START GAME! [ENTER]</button>
+                    <button class="btn-start" style="flex:1 1 100%; font-size:18px; padding:10px 20px; margin-top:0;" onclick="document.getElementById('playerName').blur(); initAudio(); startGame();">▶ START GAME! [ENTER]</button>
                 </div>
             </div>
         </div>
@@ -172,12 +194,18 @@
     <div id="controls-modal" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center;">
         <div style="background:#1e293b; padding: 20px; border-radius: 10px; border: 4px solid #facc15; color:#fff; font-family:'Bubblegum Sans', cursive; text-align:center; max-width: 400px; width: 100%;">
             <h2 style="font-family:'Luckiest Guy', cursive; color:#38bdf8; margin-top:0;">Custom Controls</h2>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; text-align: left;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 20px; text-align: left; max-height:250px; overflow-y:auto; padding-right:10px; font-size:16px;">
+                <label>Up:</label> <input type="text" id="btn-map-up" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('up')">
+                <label>Down:</label> <input type="text" id="btn-map-down" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('down')">
+                <label>Left:</label> <input type="text" id="btn-map-left" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('left')">
+                <label>Right:</label> <input type="text" id="btn-map-right" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('right')">
                 <label>Jump:</label> <input type="text" id="btn-map-jump" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('jump')">
                 <label>Green Shot:</label> <input type="text" id="btn-map-green" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('green')">
                 <label>Red Shot:</label> <input type="text" id="btn-map-red" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('red')">
+                <label>Enter/Buy:</label> <input type="text" id="btn-map-enter" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('enter')">
+                <label>Pause:</label> <input type="text" id="btn-map-pause" readonly style="cursor:pointer; text-align:center;" onclick="rebindKey('pause')">
             </div>
-            <p style="font-size: 14px; color: #cbd5e1; margin-bottom:20px;">Click an input above, then press a key or gamepad button to bind it. D-Pad/Arrows are always mapped to movement.</p>
+            <p style="font-size: 14px; color: #cbd5e1; margin-bottom:20px;">Click an input above, then press a key or gamepad button to bind it. Default Keys are also mapped.</p>
             <button class="btn-start" style="font-size: 20px; padding: 10px; margin-bottom: 10px; width: 100%;" onclick="resetControls()">Reset to Default</button>
             <button class="btn-start" style="font-size: 20px; padding: 10px; background: #ef4444; width: 100%;" onclick="closeControlsModal()">Close</button>
         </div>
@@ -190,6 +218,81 @@
     </div>
 
     <script>
+        window.drawBoss = (ctx, x, face, hatType, mainColor) => {
+            ctx.save(); ctx.translate(x, 0);
+            ctx.fillStyle = mainColor; ctx.beginPath(); ctx.moveTo(44, 40); ctx.lineTo(84, 40); ctx.lineTo(94, 60); ctx.lineTo(74, 90); ctx.lineTo(54, 90); ctx.lineTo(34, 60); ctx.fill();
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(54, 60, 20, 30); 
+            ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(34, 40, 16, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(94, 40, 16, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#334155'; ctx.fillRect(20, 50, 12, 30); ctx.fillRect(96, 50, 12, 30);
+            ctx.fillStyle = mainColor; ctx.fillRect(14, 70, 24, 25); ctx.fillRect(90, 70, 24, 25); 
+            ctx.fillStyle = '#334155'; ctx.fillRect(44, 90, 14, 20); ctx.fillRect(70, 90, 14, 20);
+            ctx.fillStyle = mainColor; ctx.beginPath(); ctx.moveTo(40, 100); ctx.lineTo(60, 100); ctx.lineTo(64, 120); ctx.lineTo(36, 120); ctx.fill(); ctx.beginPath(); ctx.moveTo(68, 100); ctx.lineTo(88, 100); ctx.lineTo(92, 120); ctx.lineTo(64, 120); ctx.fill();
+            ctx.fillStyle = mainColor; ctx.beginPath(); ctx.arc(64, 26, 22, Math.PI, 0); ctx.lineTo(86, 40); ctx.lineTo(42, 40); ctx.fill();
+            ctx.fillStyle = '#0f172a'; ctx.fillRect(48, 20, 32, 20);
+            
+            if(hatType === 'chef') { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(64, 0, 15, 0, Math.PI*2); ctx.arc(50, 8, 10, 0, Math.PI*2); ctx.arc(78, 8, 10, 0, Math.PI*2); ctx.fill(); } 
+            else if(hatType === 'neon') { ctx.fillStyle = '#06b6d4'; ctx.fillRect(60, 5, 8, 15); ctx.fillStyle = '#f472b6'; ctx.fillRect(44, 10, 40, 4); } 
+            else if(hatType === 'gorilla') { ctx.fillStyle = '#451a03'; ctx.beginPath(); ctx.arc(42, 16, 10, 0, Math.PI*2); ctx.arc(86, 16, 10, 0, Math.PI*2); ctx.fill(); ctx.fillRect(44, 40, 40, 20); } 
+            else if(hatType === 'penguin') { ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.moveTo(64, -5); ctx.lineTo(50, 15); ctx.lineTo(78, 15); ctx.fill(); } 
+            else if(hatType === 'cosmos') { ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(64, 5, 12, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(64, 5, 18, 0, Math.PI*2); ctx.stroke(); } 
+            else { ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.moveTo(64, 5); ctx.lineTo(54, 20); ctx.lineTo(74, 20); ctx.fill(); } 
+            
+            ctx.fillStyle = '#ef4444'; 
+            if(face === 'annoyed') { ctx.beginPath(); ctx.moveTo(50, 22); ctx.lineTo(60, 26); ctx.lineTo(50, 26); ctx.fill(); ctx.beginPath(); ctx.moveTo(78, 22); ctx.lineTo(68, 26); ctx.lineTo(78, 26); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(58, 32, 12, 2); } 
+            else if(face === 'angry') { ctx.fillStyle = '#facc15'; ctx.fillRect(50, 22, 8, 8); ctx.fillRect(70, 22, 8, 8); ctx.fillStyle = '#fff'; ctx.fillRect(60, 32, 8, 6); } 
+            else if(face === 'laughing') { ctx.beginPath(); ctx.moveTo(50, 26); ctx.quadraticCurveTo(55, 20, 60, 26); ctx.stroke(); ctx.beginPath(); ctx.moveTo(68, 26); ctx.quadraticCurveTo(73, 20, 78, 26); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(64, 32, 6, 0, Math.PI, false); ctx.fill(); }
+            ctx.restore();
+        };
+        
+        window.drawGuardian = (ctx, x, face) => {
+            ctx.save(); ctx.translate(x, 0);
+            let silver = "#e2e8f0"; let darkMetal = "#334155"; let blue = "#2563eb"; let red = "#dc2626"; let yellow = "#facc15"; let green = "#16a34a";
+            ctx.fillStyle = red; ctx.beginPath(); ctx.moveTo(128, 100); ctx.lineTo(20, 20); ctx.lineTo(60, 120); ctx.fill();
+            ctx.fillStyle = green; ctx.beginPath(); ctx.moveTo(128, 100); ctx.lineTo(236, 20); ctx.lineTo(196, 120); ctx.fill();
+            ctx.fillStyle = darkMetal; ctx.fillRect(80, 180, 30, 70); ctx.fillRect(146, 180, 30, 70);
+            ctx.fillStyle = blue; ctx.fillRect(70, 210, 40, 46); ctx.fillStyle = yellow; ctx.fillRect(140, 210, 40, 46);
+            ctx.fillStyle = darkMetal; ctx.fillRect(40, 100, 30, 80); ctx.fillRect(186, 100, 30, 80);
+            ctx.fillStyle = red; ctx.fillRect(30, 140, 40, 50); ctx.fillStyle = green; ctx.fillRect(186, 140, 40, 50);
+            ctx.fillStyle = silver; ctx.beginPath(); ctx.arc(55, 100, 25, 0, Math.PI*2); ctx.arc(201, 100, 25, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = silver; ctx.fillRect(80, 80, 96, 100);
+            ctx.fillStyle = darkMetal; ctx.beginPath(); ctx.moveTo(80,80); ctx.lineTo(128,120); ctx.lineTo(176,80); ctx.fill();
+            ctx.fillStyle = yellow; ctx.beginPath(); ctx.arc(128, 130, 25, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(118, 125, 5, 0, Math.PI*2); ctx.arc(138, 125, 5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(110, 140); ctx.lineTo(146, 140); ctx.lineTo(128, 160); ctx.fill();
+            ctx.fillStyle = darkMetal; ctx.fillRect(108, 30, 40, 50);
+            ctx.fillStyle = silver; ctx.fillRect(113, 40, 30, 40);
+            ctx.fillStyle = yellow; ctx.beginPath(); ctx.moveTo(100, 20); ctx.lineTo(128, 50); ctx.lineTo(156, 20); ctx.lineTo(128, 40); ctx.fill();
+            ctx.fillStyle = red;
+            if (face === 'annoyed') { ctx.fillRect(115, 50, 10, 5); ctx.fillRect(130, 50, 10, 5); }
+            else if (face === 'angry') { ctx.beginPath(); ctx.moveTo(115, 50); ctx.lineTo(125, 55); ctx.lineTo(115, 55); ctx.fill(); ctx.beginPath(); ctx.moveTo(140, 50); ctx.lineTo(130, 55); ctx.lineTo(140, 55); ctx.fill(); }
+            else { ctx.fillRect(118, 50, 8, 4); ctx.fillRect(130, 50, 8, 4); }
+            ctx.restore();
+        };
+
+        window.currentBossIndex = 0;
+        window.cycleBoss = (dir) => {
+            window.currentBossIndex += dir;
+            if (window.currentBossIndex < 0) window.currentBossIndex = 6;
+            if (window.currentBossIndex > 6) window.currentBossIndex = 0;
+            
+            const titles = ["World 1 Boss", "World 2 Boss", "World 3 Boss", "World 4 Boss", "World 5 Boss", "World 6 Boss", "World 7 Guardian"];
+            document.getElementById('boss-thumbnail-label').innerText = titles[window.currentBossIndex];
+            
+            let canvas = document.getElementById('boss-thumbnail');
+            if(!canvas) return;
+            let ctx = canvas.getContext('2d');
+            ctx.clearRect(0,0,128,128);
+            
+            if (window.currentBossIndex === 6) {
+                ctx.save(); ctx.scale(0.5, 0.5); // scale down 256x256 to 128x128
+                window.drawGuardian(ctx, 0, 'annoyed');
+                ctx.restore();
+            } else {
+                let bHats = ['chef', 'neon', 'gorilla', 'penguin', 'cosmos', 'default']; 
+                let bCols = ['#f87171', '#c084fc', '#4ade80', '#60a5fa', '#a78bfa', '#fbbf24'];
+                window.drawBoss(ctx, 0, 'annoyed', bHats[window.currentBossIndex], bCols[window.currentBossIndex]);
+            }
+        };
         window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initFirebase = async () => {
             try {
@@ -253,9 +356,16 @@
             if (window.unlockedBelts.length >= 7 || isGod) {
                 document.getElementById('level-select-group').style.display = 'block';
                 document.getElementById('portrait-alien-container').style.display = 'block';
+                if (isGod) {
+                    document.getElementById('boss-gallery-group').style.display = 'flex';
+                    cycleBoss(0);
+                } else {
+                    document.getElementById('boss-gallery-group').style.display = 'none';
+                }
             } else {
                 document.getElementById('level-select-group').style.display = 'none';
                 document.getElementById('portrait-alien-container').style.display = 'none';
+                document.getElementById('boss-gallery-group').style.display = 'none';
             }
         };
 
@@ -445,6 +555,12 @@
             if(document.getElementById('glasses-group').style.display !== 'none') globalGlasses = document.querySelector('input[name="glasses"]:checked').value;
             if(document.getElementById('power-group').style.display !== 'none') globalPower = document.querySelector('input[name="power"]:checked').value;
 
+            window.globalStartingWorld = 1;
+            const lvlSelect = document.getElementById('level-select-group');
+            if (lvlSelect && lvlSelect.style.display !== 'none') {
+                window.globalStartingWorld = parseInt(document.getElementById('startLevelSelect').value) || 1;
+            }
+
             window.gameStats = { correct: 0, total: 0, money: 0.00 };
             window.tempUpgrades = { hearts: false, invincibility: false, teddyBears: false, karate: false, macho: false, levitate: false };
 
@@ -475,9 +591,15 @@
 
         // customControls defined first so the single keydown listener below can reference it
         let customControls = {
+            up: 'ArrowUp',
+            down: 'ArrowDown',
+            left: 'ArrowLeft',
+            right: 'ArrowRight',
             jump: 'Alt',
             green: 'Shift',
-            red: 'Control'
+            red: 'Control',
+            enter: 'Enter',
+            pause: 'Escape'
         };
         let isRebinding = null;
 
@@ -490,27 +612,23 @@
             isRebinding = null;
         }
         function updateControlsUI() {
-            document.getElementById('btn-map-jump').value = customControls.jump;
-            document.getElementById('btn-map-green').value = customControls.green;
-            document.getElementById('btn-map-red').value = customControls.red;
+            ['up','down','left','right','jump','green','red','enter','pause'].forEach(k => {
+                let el = document.getElementById('btn-map-' + k);
+                if (el) el.value = customControls[k];
+            });
         }
         function rebindKey(action) {
             isRebinding = action;
             document.getElementById('btn-map-' + action).value = "Press any key/btn...";
         }
         function resetControls() {
-            customControls = { jump: 'Space', green: 'Shift', red: 'Control' };
+            customControls = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', jump: 'Alt', green: 'Shift', red: 'Control', enter: 'Enter', pause: 'Escape' };
             updateControlsUI();
             isRebinding = null;
         }
         function toggleFullscreen() {
-            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement) {
-                if (document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen(); }
-                else if (document.documentElement.webkitRequestFullscreen) { document.documentElement.webkitRequestFullscreen(); }
-            } else {
-                if (document.exitFullscreen) { document.exitFullscreen(); }
-                else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
-            }
+            let btn = document.getElementById('btn-fullscreen');
+            if (btn) btn.click();
         }
 
         window.addEventListener('load', () => {
@@ -572,18 +690,54 @@
             }
         });
         
-        // Gamepad rebinding listener loop
+        // Gamepad rebinding listener loop — also handles enter/start button on title screen
+        let _prevPadAxes = [];
         setInterval(() => {
-            if (!isRebinding) return;
-            let pads = navigator.getGamepads ? navigator.getGamepads() : [];
-            let pad = pads[0];
-            if (pad) {
+            // Always find first connected pad
+            let pads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+            let pad = pads.find(p => p && p.connected) || null;
+            if (!pad) return;
+
+            // When actively rebinding, capture first pressed button OR moved axis
+            if (isRebinding) {
+                // Check buttons
                 for (let i = 0; i < pad.buttons.length; i++) {
                     if (pad.buttons[i].pressed) {
                         customControls[isRebinding] = `Pad Btn ${i}`;
-                        isRebinding = null;
+                        isRebinding = null; _prevPadAxes = [];
                         updateControlsUI();
                         return;
+                    }
+                }
+                // Check axes (for fight sticks like Hori that use axes for directions)
+                for (let ai = 0; ai < pad.axes.length; ai++) {
+                    let val = pad.axes[ai];
+                    let prev = _prevPadAxes[ai] || 0;
+                    if (Math.abs(val) > 0.7 && Math.abs(val) > Math.abs(prev) + 0.3) {
+                        customControls[isRebinding] = val > 0 ? `Pad Axis ${ai}+` : `Pad Axis ${ai}-`;
+                        isRebinding = null; _prevPadAxes = [];
+                        updateControlsUI();
+                        return;
+                    }
+                }
+                _prevPadAxes = Array.from(pad.axes);
+                return;
+            }
+
+            // When on title screen, let the mapped enter button or Start(9)/A(0) launch the game
+            if (!window.gameStarted) {
+                let startScreen = document.getElementById('start-screen');
+                let screenVisible = startScreen && startScreen.style.display !== 'none';
+                if (screenVisible) {
+                    let enterCtrl = customControls.enter;
+                    let enterBtnIdx = enterCtrl.startsWith('Pad Btn') ? parseInt(enterCtrl.split(' ')[2]) : -1;
+                    let shouldStart = pad.buttons[9]?.pressed ||
+                                      (enterBtnIdx >= 0 && pad.buttons[enterBtnIdx]?.pressed);
+                    if (shouldStart && !window._padStartThrottle) {
+                        window._padStartThrottle = true;
+                        setTimeout(() => { window._padStartThrottle = false; }, 600);
+                        initAudio();
+                        startGame();
                     }
                 }
             }
@@ -1088,70 +1242,19 @@
                     makeTexture('signpost', 64, 64, (ctx, w, h) => { ctx.fillStyle = '#78350f'; ctx.fillRect(28, 20, 8, 44); ctx.fillStyle = '#f59e0b'; ctx.fillRect(0, 4, 64, 28); ctx.fillStyle = '#fff'; ctx.font = 'bold 16px "Bubblegum Sans", cursive'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('1/2 WAY', 32, 18); });
                     makeTexture('lightning_bolt', 32, 48, (ctx, w, h) => { ctx.fillStyle = '#eab308'; ctx.strokeStyle = '#fef08a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(20, 2); ctx.lineTo(4, 26); ctx.lineTo(16, 26); ctx.lineTo(12, 46); ctx.lineTo(28, 22); ctx.lineTo(16, 22); ctx.closePath(); ctx.fill(); ctx.stroke(); });
                     makeTexture('protractor_item', 40, 40, (ctx, w, h) => { ctx.strokeStyle = '#38bdf8'; ctx.fillStyle = '#0284c7aa'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(20, 30, 16, Math.PI, 0); ctx.lineTo(36, 30); ctx.lineTo(4, 30); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; for (let a = 0; a <= 180; a += 30) { let rad = (a - 180) * Math.PI / 180; ctx.beginPath(); ctx.moveTo(20 + Math.cos(rad)*12, 30 + Math.sin(rad)*12); ctx.lineTo(20 + Math.cos(rad)*16, 30 + Math.sin(rad)*16); ctx.stroke(); } });
-
-                    const drawBoss = (ctx, x, face, hatType, mainColor) => {
-                        ctx.save(); ctx.translate(x, 0);
-                        ctx.fillStyle = mainColor; ctx.beginPath(); ctx.moveTo(44, 40); ctx.lineTo(84, 40); ctx.lineTo(94, 60); ctx.lineTo(74, 90); ctx.lineTo(54, 90); ctx.lineTo(34, 60); ctx.fill();
-                        ctx.fillStyle = '#1e293b'; ctx.fillRect(54, 60, 20, 30); 
-                        ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(34, 40, 16, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(94, 40, 16, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = '#334155'; ctx.fillRect(20, 50, 12, 30); ctx.fillRect(96, 50, 12, 30);
-                        ctx.fillStyle = mainColor; ctx.fillRect(14, 70, 24, 25); ctx.fillRect(90, 70, 24, 25); 
-                        ctx.fillStyle = '#334155'; ctx.fillRect(44, 90, 14, 20); ctx.fillRect(70, 90, 14, 20);
-                        ctx.fillStyle = mainColor; ctx.beginPath(); ctx.moveTo(40, 100); ctx.lineTo(60, 100); ctx.lineTo(64, 120); ctx.lineTo(36, 120); ctx.fill(); ctx.beginPath(); ctx.moveTo(68, 100); ctx.lineTo(88, 100); ctx.lineTo(92, 120); ctx.lineTo(64, 120); ctx.fill();
-                        ctx.fillStyle = mainColor; ctx.beginPath(); ctx.arc(64, 26, 22, Math.PI, 0); ctx.lineTo(86, 40); ctx.lineTo(42, 40); ctx.fill();
-                        ctx.fillStyle = '#0f172a'; ctx.fillRect(48, 20, 32, 20);
-                        
-                        if(hatType === 'chef') { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(64, 0, 15, 0, Math.PI*2); ctx.arc(50, 8, 10, 0, Math.PI*2); ctx.arc(78, 8, 10, 0, Math.PI*2); ctx.fill(); } 
-                        else if(hatType === 'neon') { ctx.fillStyle = '#06b6d4'; ctx.fillRect(60, 5, 8, 15); ctx.fillStyle = '#f472b6'; ctx.fillRect(44, 10, 40, 4); } 
-                        else if(hatType === 'gorilla') { ctx.fillStyle = '#451a03'; ctx.beginPath(); ctx.arc(42, 16, 10, 0, Math.PI*2); ctx.arc(86, 16, 10, 0, Math.PI*2); ctx.fill(); ctx.fillRect(44, 40, 40, 20); } 
-                        else if(hatType === 'penguin') { ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.moveTo(64, -5); ctx.lineTo(50, 15); ctx.lineTo(78, 15); ctx.fill(); } 
-                        else if(hatType === 'cosmos') { ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(64, 5, 12, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(64, 5, 18, 0, Math.PI*2); ctx.stroke(); } 
-                        else { ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.moveTo(64, 5); ctx.lineTo(54, 20); ctx.lineTo(74, 20); ctx.fill(); } 
-                        
-                        ctx.fillStyle = '#ef4444'; 
-                        if(face === 'annoyed') { ctx.beginPath(); ctx.moveTo(50, 22); ctx.lineTo(60, 26); ctx.lineTo(50, 26); ctx.fill(); ctx.beginPath(); ctx.moveTo(78, 22); ctx.lineTo(68, 26); ctx.lineTo(78, 26); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(58, 32, 12, 2); } 
-                        else if(face === 'angry') { ctx.fillStyle = '#facc15'; ctx.fillRect(50, 22, 8, 8); ctx.fillRect(70, 22, 8, 8); ctx.fillStyle = '#fff'; ctx.fillRect(60, 32, 8, 6); } 
-                        else if(face === 'laughing') { ctx.beginPath(); ctx.moveTo(50, 26); ctx.quadraticCurveTo(55, 20, 60, 26); ctx.stroke(); ctx.beginPath(); ctx.moveTo(68, 26); ctx.quadraticCurveTo(73, 20, 78, 26); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(64, 32, 6, 0, Math.PI, false); ctx.fill(); }
-                        ctx.restore();
-                    };
                     
                     let bHats = ['chef', 'neon', 'gorilla', 'penguin', 'cosmos', 'default']; let bCols = ['#f87171', '#c084fc', '#4ade80', '#60a5fa', '#a78bfa', '#fbbf24'];
                     for(let i=1; i<=6; i++) {
                         if (!this.textures.exists(`boss_${i}`)) {
                             const cb = document.createElement('canvas'); cb.width = 128*3; cb.height = 128; const cx = cb.getContext('2d');
-                            drawBoss(cx, 0, 'annoyed', bHats[i-1], bCols[i-1]); drawBoss(cx, 128, 'angry', bHats[i-1], bCols[i-1]); drawBoss(cx, 256, 'laughing', bHats[i-1], bCols[i-1]);
+                            window.drawBoss(cx, 0, 'annoyed', bHats[i-1], bCols[i-1]); window.drawBoss(cx, 128, 'angry', bHats[i-1], bCols[i-1]); window.drawBoss(cx, 256, 'laughing', bHats[i-1], bCols[i-1]);
                             this.textures.addSpriteSheet(`boss_${i}`, cb, { frameWidth: 128, frameHeight: 128 });
                         }
                     }
 
-                    const drawGuardian = (ctx, x, face) => {
-                        ctx.save(); ctx.translate(x, 0);
-                        let silver = "#e2e8f0"; let darkMetal = "#334155"; let blue = "#2563eb"; let red = "#dc2626"; let yellow = "#facc15"; let green = "#16a34a";
-                        ctx.fillStyle = red; ctx.beginPath(); ctx.moveTo(128, 100); ctx.lineTo(20, 20); ctx.lineTo(60, 120); ctx.fill();
-                        ctx.fillStyle = green; ctx.beginPath(); ctx.moveTo(128, 100); ctx.lineTo(236, 20); ctx.lineTo(196, 120); ctx.fill();
-                        ctx.fillStyle = darkMetal; ctx.fillRect(80, 180, 30, 70); ctx.fillRect(146, 180, 30, 70);
-                        ctx.fillStyle = blue; ctx.fillRect(70, 210, 40, 46); ctx.fillStyle = yellow; ctx.fillRect(140, 210, 40, 46);
-                        ctx.fillStyle = darkMetal; ctx.fillRect(40, 100, 30, 80); ctx.fillRect(186, 100, 30, 80);
-                        ctx.fillStyle = red; ctx.fillRect(30, 140, 40, 50); ctx.fillStyle = green; ctx.fillRect(186, 140, 40, 50);
-                        ctx.fillStyle = silver; ctx.beginPath(); ctx.arc(55, 100, 25, 0, Math.PI*2); ctx.arc(201, 100, 25, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = silver; ctx.fillRect(80, 80, 96, 100);
-                        ctx.fillStyle = darkMetal; ctx.beginPath(); ctx.moveTo(80,80); ctx.lineTo(128,120); ctx.lineTo(176,80); ctx.fill();
-                        ctx.fillStyle = yellow; ctx.beginPath(); ctx.arc(128, 130, 25, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(118, 125, 5, 0, Math.PI*2); ctx.arc(138, 125, 5, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(110, 140); ctx.lineTo(146, 140); ctx.lineTo(128, 160); ctx.fill();
-                        ctx.fillStyle = darkMetal; ctx.fillRect(108, 30, 40, 50);
-                        ctx.fillStyle = silver; ctx.fillRect(113, 40, 30, 40);
-                        ctx.fillStyle = yellow; ctx.beginPath(); ctx.moveTo(100, 20); ctx.lineTo(128, 50); ctx.lineTo(156, 20); ctx.lineTo(128, 40); ctx.fill();
-                        ctx.fillStyle = red;
-                        if (face === 'annoyed') { ctx.fillRect(115, 50, 10, 5); ctx.fillRect(130, 50, 10, 5); }
-                        else if (face === 'angry') { ctx.beginPath(); ctx.moveTo(115, 50); ctx.lineTo(125, 55); ctx.lineTo(115, 55); ctx.fill(); ctx.beginPath(); ctx.moveTo(140, 50); ctx.lineTo(130, 55); ctx.lineTo(140, 55); ctx.fill(); }
-                        else { ctx.fillRect(118, 50, 8, 4); ctx.fillRect(130, 50, 8, 4); }
-                        ctx.restore();
-                    };
-
-                    if (!this.textures.exists(`boss_7`)) {
+                    if (!this.textures.exists('boss_7')) {
                         const cb7 = document.createElement('canvas'); cb7.width = 256*3; cb7.height = 256; const cx7 = cb7.getContext('2d');
-                        drawGuardian(cx7, 0, 'annoyed'); drawGuardian(cx7, 256, 'angry'); drawGuardian(cx7, 512, 'laughing');
+                        window.drawGuardian(cx7, 0, 'annoyed'); window.drawGuardian(cx7, 256, 'angry'); window.drawGuardian(cx7, 512, 'laughing');
                         this.textures.addSpriteSheet(`boss_7`, cb7, { frameWidth: 256, frameHeight: 256 });
                     }
 
@@ -1177,16 +1280,37 @@
                     const startText = this.add.text(480, 420, '- Press ENTER to Start -', { fontFamily: titleFont, fontSize: '30px', color: '#fff', shadow: { offsetX: 3, offsetY: 3, color: '#000', fill: true } }).setOrigin(0.5);
                     this.tweens.add({ targets: startText, alpha: 0, duration: 800, yoyo: true, repeat: -1 });
 
-                    let startTriggered = false;
+                    this._startTriggered = false;
                     const startGameListener = (e) => {
-                        if (e.key === 'Enter' && !startTriggered) {
-                            let sel = document.getElementById('startLevelSelect');
-                            let targetWorld = sel && sel.offsetParent !== null ? parseInt(sel.value) || 1 : 1;
-                            startTriggered = true; this.input.keyboard.off('keydown', startGameListener); this.cameras.main.fade(1000, 0, 0, 0);
-                            this.time.delayedCall(1000, () => { this.scene.start('GameScene', { world: targetWorld, score: 0, lives: 3 }); });
+                        if (e.key === 'Enter' && !this._startTriggered) {
+                            this.startGamepad();
                         }
                     };
                     this.input.keyboard.on('keydown', startGameListener);
+                }
+
+                startGamepad() {
+                    if (this._startTriggered) return;
+                    this._startTriggered = true; 
+                    this.input.keyboard.off('keydown'); 
+                    this.cameras.main.fade(1000, 0, 0, 0);
+                    let targetWorld = window.globalStartingWorld || 1;
+                    this.time.delayedCall(1000, () => { this.scene.start('GameScene', { world: targetWorld, score: 0, lives: 3 }); });
+                }
+
+                update() {
+                    if (this._startTriggered) return;
+                    let padEnter = false;
+                    let pads = navigator.getGamepads ? navigator.getGamepads() : [];
+                    let pad = Array.from(pads).find(p => p && p.connected);
+                    if (pad) {
+                        let enterCtrl = window.customControls ? window.customControls.enter : 'Pad Btn 9';
+                        let enterBtnIdx = enterCtrl && enterCtrl.startsWith('Pad Btn') ? parseInt(enterCtrl.split(' ')[2]) : -1;
+                        padEnter = pad.buttons[9]?.pressed || (enterBtnIdx >= 0 && pad.buttons[enterBtnIdx]?.pressed);
+                    }
+                    if (padEnter) {
+                        this.startGamepad();
+                    }
                 }
             }
 
@@ -1299,8 +1423,8 @@
                     }, this);
 
                     this.physics.add.collider(this.player, this.blocks);
-                    this.physics.add.collider(this.enemies, this.platforms, null, (enemy) => !enemy.isBird);
-                    this.physics.add.collider(this.enemies, this.blocks, null, (enemy) => !enemy.isBird);
+                    this.physics.add.collider(this.enemies, this.platforms, null, (enemy) => !enemy.isBird && !(enemy.isBoss && this.currentWorld === 7));
+                    this.physics.add.collider(this.enemies, this.blocks, null, (enemy) => !enemy.isBird && !(enemy.isBoss && this.currentWorld === 7));
                     this.physics.add.collider(this.items, this.platforms);
                     this.physics.add.collider(this.bossBalls, this.platforms);
                     this.physics.add.collider(this.bossBalls, this.blocks);
@@ -1375,15 +1499,29 @@
                         if(k === 'SHIFT') return Phaser.Input.Keyboard.KeyCodes.SHIFT;
                         if(k === 'CONTROL' || k === 'CTRL') return Phaser.Input.Keyboard.KeyCodes.CTRL;
                         if(k === 'ALT') return Phaser.Input.Keyboard.KeyCodes.ALT;
+                        if(k === 'ARROWUP') return Phaser.Input.Keyboard.KeyCodes.UP;
+                        if(k === 'ARROWDOWN') return Phaser.Input.Keyboard.KeyCodes.DOWN;
+                        if(k === 'ARROWLEFT') return Phaser.Input.Keyboard.KeyCodes.LEFT;
+                        if(k === 'ARROWRIGHT') return Phaser.Input.Keyboard.KeyCodes.RIGHT;
+                        if(k === 'ESCAPE') return Phaser.Input.Keyboard.KeyCodes.ESC;
+                        if(k === 'ENTER') return Phaser.Input.Keyboard.KeyCodes.ENTER;
                         return Phaser.Input.Keyboard.KeyCodes[k] || Phaser.Input.Keyboard.KeyCodes.SPACE;
                     };
                     
                     this.keys = this.input.keyboard.addKeys({
+                        cUp: getKeyCode(customControls.up),
+                        cDown: getKeyCode(customControls.down),
+                        cLeft: getKeyCode(customControls.left),
+                        cRight: getKeyCode(customControls.right),
                         jump: getKeyCode(customControls.jump),
                         fireGreen: getKeyCode(customControls.green),
                         fireRed: getKeyCode(customControls.red),
-                        pause: Phaser.Input.Keyboard.KeyCodes.ESC, enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+                        pause: getKeyCode(customControls.pause),
+                        enter: getKeyCode(customControls.enter),
                         up: Phaser.Input.Keyboard.KeyCodes.UP,
+                        down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+                        left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+                        right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
                         wKey: Phaser.Input.Keyboard.KeyCodes.W,
                         altKey: Phaser.Input.Keyboard.KeyCodes.ALT,
                         spaceKey: Phaser.Input.Keyboard.KeyCodes.SPACE,
@@ -1392,7 +1530,7 @@
                     });
                     
                     // For tracking gamepad just down/up
-                    this.prevPad = { jump: false, green: false, red: false, pause: false, up: false };
+                    this.prevPad = { jump: false, green: false, red: false, pause: false, up: false, down: false, left: false, right: false, enter: false };
                     
                     this.jumps = 0; this.facingRight = true; this.isWinning = false; this.isDead = false;
                     this.chargeGreen = 0; this.chargeRed = 0; this.hasBonsai = false; this.isBonsaiJumping = false;
@@ -1607,39 +1745,81 @@
                     if (!this.sys || !this.sys.isActive()) return;
 
                     
-                    let padJump = false, padGreen = false, padRed = false, padUp = false, padDown = false, padLeft = false, padRight = false, padPause = false;
-                    let pads = navigator.getGamepads ? navigator.getGamepads() : [];
-                    let pad = pads[0];
+                    let padJump = false, padGreen = false, padRed = false, padUp = false, padDown = false, padLeft = false, padRight = false, padPause = false, padEnter = false;
+                    // Find first active gamepad — not always at index 0
+                    let pads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+                    let pad = pads.find(p => p && p.connected) || null;
                     if (pad) {
-                        padUp = pad.axes[1] < -0.5 || pad.buttons[12]?.pressed;
-                        padDown = pad.axes[1] > 0.5 || pad.buttons[13]?.pressed;
-                        padLeft = pad.axes[0] < -0.5 || pad.buttons[14]?.pressed;
-                        padRight = pad.axes[0] > 0.5 || pad.buttons[15]?.pressed;
-                        // Support A/Cross(0), X/Square(2), B/Circle(1), Y/Triangle(3)
-                        padJump = pad.buttons[0]?.pressed || pad.buttons[1]?.pressed || (customControls.jump.startsWith('Pad Btn') && pad.buttons[parseInt(customControls.jump.split(' ')[2])]?.pressed);
-                        padGreen = pad.buttons[2]?.pressed || pad.buttons[3]?.pressed || (customControls.green.startsWith('Pad Btn') && pad.buttons[parseInt(customControls.green.split(' ')[2])]?.pressed);
-                        padRed = pad.buttons[3]?.pressed || pad.buttons[2]?.pressed || pad.buttons[5]?.pressed || pad.buttons[7]?.pressed || (customControls.red.startsWith('Pad Btn') && pad.buttons[parseInt(customControls.red.split(' ')[2])]?.pressed); 
-                        padPause = pad.buttons[9]?.pressed; // Start
+                        // Read all axes — fight sticks (Hori, etc.) may use axes 0/1, 2/3, 4/5, 6/7, or individual axes
+                        let axH = 0, axV = 0;
+                        for (let ai = 0; ai < pad.axes.length; ai++) {
+                            let val = pad.axes[ai] || 0;
+                            // Even axes = horizontal, odd = vertical (standard mapping)
+                            // BUT also check HAT-style: axis 6 = H (-1 left,+1 right), axis 7 = V (-1 up,+1 down)
+                            if (ai % 2 === 0 && Math.abs(val) > Math.abs(axH)) axH = val;
+                            if (ai % 2 === 1 && Math.abs(val) > Math.abs(axV)) axV = val;
+                        }
+                        padUp    = axV < -0.5 || pad.buttons[12]?.pressed || (customControls.up.startsWith('Pad Btn')    && pad.buttons[parseInt(customControls.up.split(' ')[2])]?.pressed)    || (customControls.up.startsWith('Pad Axis') && (customControls.up.endsWith('+') ? (pad.axes[parseInt(customControls.up.split(' ')[2])] > 0.5) : (pad.axes[parseInt(customControls.up.split(' ')[2])] < -0.5)));
+                        padDown  = axV >  0.5 || pad.buttons[13]?.pressed || (customControls.down.startsWith('Pad Btn')  && pad.buttons[parseInt(customControls.down.split(' ')[2])]?.pressed)  || (customControls.down.startsWith('Pad Axis') && (customControls.down.endsWith('+') ? (pad.axes[parseInt(customControls.down.split(' ')[2])] > 0.5) : (pad.axes[parseInt(customControls.down.split(' ')[2])] < -0.5)));
+                        padLeft  = axH < -0.5 || pad.buttons[14]?.pressed || (customControls.left.startsWith('Pad Btn')  && pad.buttons[parseInt(customControls.left.split(' ')[2])]?.pressed)  || (customControls.left.startsWith('Pad Axis') && (customControls.left.endsWith('+') ? (pad.axes[parseInt(customControls.left.split(' ')[2])] > 0.5) : (pad.axes[parseInt(customControls.left.split(' ')[2])] < -0.5)));
+                        padRight = axH >  0.5 || pad.buttons[15]?.pressed || (customControls.right.startsWith('Pad Btn') && pad.buttons[parseInt(customControls.right.split(' ')[2])]?.pressed) || (customControls.right.startsWith('Pad Axis') && (customControls.right.endsWith('+') ? (pad.axes[parseInt(customControls.right.split(' ')[2])] > 0.5) : (pad.axes[parseInt(customControls.right.split(' ')[2])] < -0.5)));
+                        // Xbox: A(0)/B(1)=jump, X(2)=green shot, Y(3)/RB(5)/RT(7)=red shot — no overlap
+                        let mappedPadBtns = new Set();
+                        for (let k in customControls) {
+                            if (customControls[k].startsWith('Pad Btn')) mappedPadBtns.add(parseInt(customControls[k].split(' ')[2]));
+                        }
+                        let isBtn = (defBtns) => defBtns.some(b => pad.buttons[b]?.pressed && !mappedPadBtns.has(b));
+                        
+                        padJump  = isBtn([0, 1]) || (customControls.jump.startsWith('Pad Btn')  && pad.buttons[parseInt(customControls.jump.split(' ')[2])]?.pressed);
+                        padGreen = isBtn([2]) || (customControls.green.startsWith('Pad Btn') && pad.buttons[parseInt(customControls.green.split(' ')[2])]?.pressed);
+                        padRed   = isBtn([3, 5, 7]) || (customControls.red.startsWith('Pad Btn') && pad.buttons[parseInt(customControls.red.split(' ')[2])]?.pressed);
+                        padPause = isBtn([9]) || (customControls.pause.startsWith('Pad Btn') && pad.buttons[parseInt(customControls.pause.split(' ')[2])]?.pressed);
+                        padEnter = (customControls.enter.startsWith('Pad Btn') && pad.buttons[parseInt(customControls.enter.split(' ')[2])]?.pressed);
                     }
                     
                     let inp = {
-                        up: this.keys.up.isDown || this.cursors.up.isDown || padUp,
-                        down: this.cursors.down.isDown || padDown,
-                        left: this.cursors.left.isDown || padLeft,
-                        right: this.cursors.right.isDown || padRight,
+                        up:    this.keys.up.isDown    || this.cursors.up.isDown    || this.keys.cUp.isDown    || padUp,
+                        down:  this.keys.down.isDown  || this.cursors.down.isDown  || this.keys.cDown.isDown  || padDown,
+                        left:  this.keys.left.isDown  || this.cursors.left.isDown  || this.keys.cLeft.isDown  || padLeft,
+                        right: this.keys.right.isDown || this.cursors.right.isDown || this.keys.cRight.isDown || padRight,
                         jump: this.keys.jump.isDown || this.keys.altKey?.isDown || this.keys.spaceKey?.isDown || this.keys.wKey?.isDown || padJump,
                         jumpJustDown: this._jumpPressed || (padJump && !this.prevPad.jump),
                         green: this.keys.fireGreen.isDown || padGreen || (this.keys.zKey?.isDown),
                         greenJustUp: Phaser.Input.Keyboard.JustUp(this.keys.fireGreen) || (this.keys.zKey && Phaser.Input.Keyboard.JustUp(this.keys.zKey)) || (!padGreen && this.prevPad.green),
                         red: this.keys.fireRed.isDown || padRed || (this.keys.xKey?.isDown),
                         redJustUp: Phaser.Input.Keyboard.JustUp(this.keys.fireRed) || (this.keys.xKey && Phaser.Input.Keyboard.JustUp(this.keys.xKey)) || (!padRed && this.prevPad.red),
-                        pauseJustDown: Phaser.Input.Keyboard.JustDown(this.keys.pause) || (padPause && !this.prevPad.pause)
+                        pauseJustDown:  Phaser.Input.Keyboard.JustDown(this.keys.pause)  || (padPause && !this.prevPad.pause),
+                        enterJustDown:  Phaser.Input.Keyboard.JustDown(this.keys.enter)  || (padEnter && !this.prevPad.enter),
+                        upJustDown:    Phaser.Input.Keyboard.JustDown(this.keys.up)    || Phaser.Input.Keyboard.JustDown(this.keys.cUp)    || (padUp    && !this.prevPad.up),
+                        downJustDown:  Phaser.Input.Keyboard.JustDown(this.keys.down)  || Phaser.Input.Keyboard.JustDown(this.keys.cDown)  || (padDown  && !this.prevPad.down),
+                        leftJustDown:  Phaser.Input.Keyboard.JustDown(this.keys.left)  || Phaser.Input.Keyboard.JustDown(this.keys.cLeft)  || (padLeft  && !this.prevPad.left),
+                        rightJustDown: Phaser.Input.Keyboard.JustDown(this.keys.right) || Phaser.Input.Keyboard.JustDown(this.keys.cRight) || (padRight && !this.prevPad.right)
                     };
+                    
+                    if (this.isShopping) {
+                        if (this.shopQContainer) {
+                            if (inp.upJustDown || inp.leftJustDown) { if (this._shopQNavigate) this._shopQNavigate(-1); }
+                            else if (inp.downJustDown || inp.rightJustDown) { if (this._shopQNavigate) this._shopQNavigate(1); }
+                            else if (inp.enterJustDown || inp.jumpJustDown) { if (this._shopQSelect) this._shopQSelect(); }
+                        } else {
+                            if (inp.upJustDown || inp.leftJustDown) { if (this._storeNavigate) this._storeNavigate(-1); }
+                            else if (inp.downJustDown || inp.rightJustDown) { if (this._storeNavigate) this._storeNavigate(1); }
+                            else if (inp.enterJustDown || inp.jumpJustDown) { if (this._storeSelect) this._storeSelect(); }
+                            else if (inp.pauseJustDown) { this.closeStore(); }
+                        }
+                    }
                     
                     if (inp.pauseJustDown && !this.isShopping && !this.isAnswering) {
                         this.isPaused = !this.isPaused;
-                        if(this.isPaused) { this.physics.pause(); if(this.pauseText) this.pauseText.setVisible(true); } 
-                        else { this.physics.resume(); if(this.pauseText) this.pauseText.setVisible(false); }
+                        if(this.isPaused) { 
+                            this.physics.pause(); 
+                            if(this.pauseText) this.pauseText.setVisible(true); 
+                            if(typeof audioCtx !== 'undefined' && audioCtx.state === 'running') audioCtx.suspend();
+                        } else { 
+                            this.physics.resume(); 
+                            if(this.pauseText) this.pauseText.setVisible(false); 
+                            if(typeof audioCtx !== 'undefined' && audioCtx.state === 'suspended') audioCtx.resume();
+                        }
                     }
                     
                     if (this.isWinning) {
@@ -1755,7 +1935,7 @@
                     }
                     
                     // Update prevPad here in update() where pad/padJump vars are in scope
-                    if (pad) { this.prevPad = { jump: padJump, green: padGreen, red: padRed, pause: padPause, up: padUp }; }
+                    if (pad) { this.prevPad = { jump: padJump, green: padGreen, red: padRed, pause: padPause, up: padUp, down: padDown, left: padLeft, right: padRight, enter: padEnter }; }
                     
                     this.handlePlayerLogic(time, delta, inp);
                     
@@ -1941,28 +2121,19 @@
                     this._storeSelectedIdx = 0;
                     this._updateStoreHighlight();
 
-                    this._storeNavHandler = (e) => {
-                        if (!this.isShopping) return;
+                    this._storeNavigate = (dir) => {
                         let total = this._storeTotalSelectable;
-                        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                            e.preventDefault();
-                            this._storeSelectedIdx = (this._storeSelectedIdx + 1) % total;
-                            this._updateStoreHighlight();
-                        } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                            e.preventDefault();
-                            this._storeSelectedIdx = (this._storeSelectedIdx - 1 + total) % total;
-                            this._updateStoreHighlight();
-                        } else if (e.key === 'Enter') {
-                            e.preventDefault();
-                            if (this._storeSelectedIdx === items.length) {
-                                this.closeStore();
-                            } else {
-                                let sel = this._storeButtons[this._storeSelectedIdx];
-                                if (!sel.isPurchased) this.buyItem(sel.item);
-                            }
+                        this._storeSelectedIdx = (this._storeSelectedIdx + dir + total) % total;
+                        this._updateStoreHighlight();
+                    };
+                    this._storeSelect = () => {
+                        if (this._storeSelectedIdx === items.length) {
+                            this.closeStore();
+                        } else {
+                            let sel = this._storeButtons[this._storeSelectedIdx];
+                            if (!sel.isPurchased) this.buyItem(sel.item);
                         }
                     };
-                    window.addEventListener('keydown', this._storeNavHandler, { capture: true });
                 }
 
                 _updateStoreHighlight() {
@@ -2004,10 +2175,9 @@
 
                     let opts = Phaser.Utils.Array.Shuffle([...qData.options]);
                     let qBtns = [];
-                    let shopQSelectedIdx = 0;
+                    this._shopQSelectedIdx = 0;
 
                     const selectAnswer = (opt) => {
-                        if (this._shopQNavHandler) { window.removeEventListener('keydown', this._shopQNavHandler, { capture: true }); this._shopQNavHandler = null; }
                         if (opt === qData.a) {
                             playPowerup();
                             window.gameStats.money -= item.price;
@@ -2016,13 +2186,14 @@
                             playThatsWrong();
                         }
                         if (this.shopQContainer) this.shopQContainer.destroy();
+                        this.shopQContainer = null;
                         this.closeStore();
                     };
 
                     const highlightQ = () => {
                         qBtns.forEach((b, i) => {
                             if (!b.btn.scene) return;
-                            b.btn.setStrokeStyle(i === shopQSelectedIdx ? 4 : 2, i === shopQSelectedIdx ? 0xfacc15 : 0x38bdf8);
+                            b.btn.setStrokeStyle(i === this._shopQSelectedIdx ? 4 : 2, i === this._shopQSelectedIdx ? 0xfacc15 : 0x38bdf8);
                         });
                     };
 
@@ -2037,21 +2208,13 @@
 
                     highlightQ();
 
-                    this._shopQNavHandler = (e) => {
-                        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                            e.preventDefault();
-                            shopQSelectedIdx = (shopQSelectedIdx + 1) % opts.length;
-                            highlightQ();
-                        } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                            e.preventDefault();
-                            shopQSelectedIdx = (shopQSelectedIdx - 1 + opts.length) % opts.length;
-                            highlightQ();
-                        } else if (e.key === 'Enter') {
-                            e.preventDefault();
-                            selectAnswer(qBtns[shopQSelectedIdx].opt);
-                        }
+                    this._shopQNavigate = (dir) => {
+                        this._shopQSelectedIdx = (this._shopQSelectedIdx + dir + opts.length) % opts.length;
+                        highlightQ();
                     };
-                    window.addEventListener('keydown', this._shopQNavHandler, { capture: true });
+                    this._shopQSelect = () => {
+                        selectAnswer(qBtns[this._shopQSelectedIdx].opt);
+                    };
                 }
 
                 grantUpgrade(id) {
@@ -2090,11 +2253,11 @@
                 }
 
                 closeStore() {
-                    if (this._storeNavHandler) { window.removeEventListener('keydown', this._storeNavHandler, { capture: true }); this._storeNavHandler = null; }
-                    if (this._shopQNavHandler) { window.removeEventListener('keydown', this._shopQNavHandler, { capture: true }); this._shopQNavHandler = null; }
                     if (this.shopBg) this.shopBg.destroy();
                     if (this.shopUI) this.shopUI.destroy();
                     if (this.shopQContainer) this.shopQContainer.destroy();
+                    this.shopQContainer = null;
+                    this.isShopping = false;
                     this.isShopping = false;
                     this.physics.resume();
                 }
@@ -2438,7 +2601,11 @@
                 spawnBoss(x, y) {
                     this.boss = this.physics.add.sprite(x, y-100, `boss_${this.currentWorld}`); 
                     this.boss.body.setSize(80, 100); this.boss.body.setOffset(24, 10);
-                    this.boss.setCollideWorldBounds(false); this.boss.body.allowGravity = false; this.enemies.add(this.boss); this.boss.isBoss = true;
+                    this.boss.setCollideWorldBounds(false);
+                    // Add to group FIRST, then disable gravity — group.add() can reset body properties
+                    this.enemies.add(this.boss);
+                    this.boss.body.allowGravity = false;
+                    this.boss.isBoss = true;
                     this.boss.setDepth(45);
                     
                     this.boss.requiredHits = 10 + ((this.currentWorld-1)*5); this.boss.hitsRemaining = this.boss.requiredHits;
@@ -2454,6 +2621,8 @@
                         this.boss.body.setOffset(48, 20);
                         this.boss.y -= 50;
                         this.bossText.y -= 80;
+                        // Re-confirm allowGravity is off for the final boss after scale/size changes
+                        this.boss.body.allowGravity = false;
                     }
                     
                     this.bossThrowEvent = this.time.addEvent({ delay: 3000, callback: this.bossThrowBall, callbackScope: this, loop: true });
@@ -3131,18 +3300,42 @@
                     this.cameras.main.fadeIn(1000, 0, 0, 0);
                     
                     this.add.image(480, 270, 'bg_sky_6').setScale(960, 1).setScrollFactor(0);
-                    let castle = this.add.image(480, 400, 'castle_of_lions').setScale(1.2);
+                    let castleContainer = this.add.container(480, 400);
+                    let castle = this.add.image(0, 0, 'castle_of_lions').setScale(1.2);
+                    castleContainer.add(castle);
+                    
+                    if (!this.textures.exists('rocket_fire')) {
+                        let g = this.make.graphics({x:0, y:0, add:false});
+                        g.fillStyle(0xffa500, 1);
+                        g.fillEllipse(15, 20, 15, 40);
+                        g.fillStyle(0xffff00, 1);
+                        g.fillEllipse(15, 15, 8, 25);
+                        g.generateTexture('rocket_fire', 30, 60);
+                    }
+                    
+                    let fires = [];
+                    for (let i = 0; i < 5; i++) {
+                        let fire = this.add.sprite(-160 + i * 80, 220, 'rocket_fire').setOrigin(0.5, 0);
+                        this.tweens.add({
+                            targets: fire, scaleX: 1.2, scaleY: 1.5, alpha: 0.8,
+                            duration: 100, yoyo: true, repeat: -1
+                        });
+                        fire.setVisible(false);
+                        castleContainer.add(fire);
+                        fires.push(fire);
+                    }
                     
                     this.time.delayedCall(2000, () => {
+                        fires.forEach(f => f.setVisible(true));
                         this.tweens.add({
-                            targets: castle,
+                            targets: castleContainer,
                             y: -300,
                             duration: 3500,
                             ease: 'Power1',
                             onStart: () => { playSynth('sawtooth', 80, 3.5, 40, 0.4); }
                         });
                         this.tweens.add({
-                            targets: castle,
+                            targets: castleContainer,
                             x: { value: '+=5', duration: 50, yoyo: true, repeat: -1 }
                         });
                     });
@@ -3163,7 +3356,7 @@
             const config = {
                 type: Phaser.AUTO,
                 scale: {
-                    mode: Phaser.Scale.FIT,
+                    mode: Phaser.Scale.NONE,
                     autoCenter: Phaser.Scale.CENTER_BOTH,
                     width: 960,
                     height: 540
@@ -3181,6 +3374,16 @@
 
             gameInstance = new Phaser.Game(config);
         }
+
+        // Auto-fullscreen on first user interaction
+        document.body.addEventListener('click', function autoFs() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => {
+                    console.log("Fullscreen request failed:", e);
+                });
+            }
+            document.body.removeEventListener('click', autoFs);
+        });
     </script>
 </body>
 </html>
