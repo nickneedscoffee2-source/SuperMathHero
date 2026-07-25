@@ -626,10 +626,7 @@
             updateControlsUI();
             isRebinding = null;
         }
-        function toggleFullscreen() {
-            let btn = document.getElementById('btn-fullscreen');
-            if (btn) btn.click();
-        }
+        function toggleFullscreen() { doFullscreen(); }
 
         window.addEventListener('load', () => {
             if(typeof updateCharacterPortraits === 'function') updateCharacterPortraits();
@@ -680,8 +677,17 @@
             // End of global keydown listener
             if (e.key === 'F11') {
                 e.preventDefault();
-                document.getElementById('btn-fullscreen').click();
+                doFullscreen();
                 return;
+            }
+            // ESC: exit fullscreen if active (browser fires this anyway, but we hook it explicitly)
+            // In-game pause is handled inside GameScene update via customControls.pause
+            if (e.key === 'Escape') {
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                    // Don't return — let Phaser's keydown also see Escape so the game pauses
+                }
             }
             // Block Windows/Meta key during gameplay to prevent accidental desktop switching
             if ((e.key === 'Meta' || e.key === 'OS' || e.code === 'MetaLeft' || e.code === 'MetaRight') && gameStarted) {
@@ -921,17 +927,19 @@
             else { if(mainBgmInterval) clearInterval(mainBgmInterval); if(starBgmInterval) clearInterval(starBgmInterval); }
         };
 
-        document.getElementById('btn-fullscreen').onclick = function(e) {
-            this.blur(); const wrap = document.getElementById('game-wrapper');
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) { 
-                if(wrap.requestFullscreen) { wrap.requestFullscreen().catch(err => console.log("Fullscreen blocked")); }
+        // Central fullscreen toggle — always targets #game-wrapper so CSS :fullscreen rules apply
+        function doFullscreen() {
+            const wrap = document.getElementById('game-wrapper');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (wrap.requestFullscreen) { wrap.requestFullscreen().catch(err => console.log('Fullscreen blocked')); }
                 else if (wrap.webkitRequestFullscreen) { wrap.webkitRequestFullscreen(); }
-            } 
-            else { 
+            } else {
                 if (document.exitFullscreen) { document.exitFullscreen(); }
                 else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
             }
-        };
+        }
+
+        document.getElementById('btn-fullscreen').onclick = function(e) { this.blur(); doFullscreen(); };
 
         function createPlayerTexture(scene) {
             let texture;
@@ -3375,12 +3383,15 @@
             gameInstance = new Phaser.Game(config);
         }
 
-        // Auto-fullscreen on first user interaction
+        // Auto-fullscreen on first user interaction — target #game-wrapper so CSS :fullscreen rules fire
         document.body.addEventListener('click', function autoFs() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(e => {
-                    console.log("Fullscreen request failed:", e);
-                });
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                const wrap = document.getElementById('game-wrapper');
+                if (wrap && wrap.requestFullscreen) {
+                    wrap.requestFullscreen().catch(e => console.log('Fullscreen request failed:', e));
+                } else if (wrap && wrap.webkitRequestFullscreen) {
+                    wrap.webkitRequestFullscreen();
+                }
             }
             document.body.removeEventListener('click', autoFs);
         });
